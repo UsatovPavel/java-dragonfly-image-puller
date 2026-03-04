@@ -1,8 +1,10 @@
 import com.github.spotbugs.snom.SpotBugsTask
 import com.google.protobuf.gradle.id
+import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     id("java")
+    id("maven-publish")
     id("checkstyle")
     id("pmd")
     id("com.github.spotbugs") version "6.4.8"
@@ -10,7 +12,7 @@ plugins {
 }
 
 group = "hse.ru"
-version = "1.0-SNAPSHOT"
+version = (findProperty("version") as String?) ?: "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -98,4 +100,29 @@ tasks.withType<SpotBugsTask>().configureEach {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifactId = "java-dragonfly-image-puller"
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            val repository = System.getenv("GITHUB_REPOSITORY") ?: "UsatovPavel/java-dragonfly-image-puller"
+            url = uri("https://maven.pkg.github.com/$repository")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_PACKAGES_TOKEN")
+            }
+        }
+    }
 }
