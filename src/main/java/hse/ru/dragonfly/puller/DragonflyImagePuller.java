@@ -34,7 +34,8 @@ public final class DragonflyImagePuller implements Closeable {
     }
 
     public static final class Builder {
-        private static final String DEFAULT_ADDRESS = "unix:///var/run/dragonfly/dfdaemon.sock";
+        private static final String DEFAULT_ADDRESS = System.getenv()
+                .getOrDefault("DFDAEMON_ADDR", "unix:///var/run/dragonfly/dfdaemon.sock");
         private static final Duration DEFAULT_REQUEST_TIMEOUT = Duration.ofSeconds(120);
         private static final int DEFAULT_MAX_RETRIES = 1;
 
