@@ -42,18 +42,11 @@ public final class DragonflyImagePuller implements Closeable {
         private String configuredAddress = DEFAULT_ADDRESS;
         private Duration configuredRequestTimeout = DEFAULT_REQUEST_TIMEOUT;
         private int configuredMaxRetries = DEFAULT_MAX_RETRIES;
-
-        public Builder address(String value) {
-            return withAddress(value);
-        }
+        private GrpcClientConfig configuredGrpcConfig = GrpcClientConfig.defaults();
 
         public Builder withAddress(String value) {
             this.configuredAddress = value;
             return this;
-        }
-
-        public Builder requestTimeout(Duration value) {
-            return withRequestTimeout(value);
         }
 
         public Builder withRequestTimeout(Duration value) {
@@ -61,12 +54,33 @@ public final class DragonflyImagePuller implements Closeable {
             return this;
         }
 
-        public Builder maxRetries(int value) {
-            return withMaxRetries(value);
-        }
-
         public Builder withMaxRetries(int value) {
             this.configuredMaxRetries = value;
+            return this;
+        }
+
+        public Builder withGrpcKeepAliveTime(Duration value) {
+            this.configuredGrpcConfig = configuredGrpcConfig.withKeepAliveTime(value);
+            return this;
+        }
+
+        public Builder withGrpcKeepAliveTimeout(Duration value) {
+            this.configuredGrpcConfig = configuredGrpcConfig.withKeepAliveTimeout(value);
+            return this;
+        }
+
+        public Builder withGrpcInitialRetryBackoff(Duration value) {
+            this.configuredGrpcConfig = configuredGrpcConfig.withInitialRetryBackoff(value);
+            return this;
+        }
+
+        public Builder withGrpcMaxRetryBackoff(Duration value) {
+            this.configuredGrpcConfig = configuredGrpcConfig.withMaxRetryBackoff(value);
+            return this;
+        }
+
+        public Builder withGrpcRetryBackoffMultiplier(double value) {
+            this.configuredGrpcConfig = configuredGrpcConfig.withRetryBackoffMultiplier(value);
             return this;
         }
 
@@ -75,7 +89,8 @@ public final class DragonflyImagePuller implements Closeable {
             DfdaemonDownloadClient client = new DfdaemonDownloadClient(
                     configuredAddress,
                     configuredRequestTimeout,
-                    configuredMaxRetries
+                    configuredMaxRetries,
+                    configuredGrpcConfig
             );
             return new DragonflyImagePuller(client);
         }
@@ -92,6 +107,7 @@ public final class DragonflyImagePuller implements Closeable {
             if (configuredMaxRetries < 0) {
                 throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "maxRetries must be >= 0");
             }
+            configuredGrpcConfig.validate();
         }
     }
 }

@@ -23,6 +23,8 @@ dependencies {
     implementation("io.grpc:grpc-protobuf:1.79.0")
     implementation("io.grpc:grpc-stub:1.79.0")
     implementation("io.grpc:grpc-netty-shaded:1.79.0")
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    runtimeOnly("ch.qos.logback:logback-classic:1.5.18")
     compileOnly("org.apache.tomcat:annotations-api:6.0.53")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
