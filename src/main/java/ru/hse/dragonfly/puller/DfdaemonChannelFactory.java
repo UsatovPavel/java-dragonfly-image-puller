@@ -1,7 +1,7 @@
-package hse.ru.dragonfly.puller;
+package ru.hse.dragonfly.puller;
 
-import hse.ru.dragonfly.puller.error.DragonflyPullException;
-import hse.ru.dragonfly.puller.error.ErrorKind;
+import ru.hse.dragonfly.puller.error.DragonflyPullException;
+import ru.hse.dragonfly.puller.error.ErrorKind;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;

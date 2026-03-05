@@ -1,4 +1,4 @@
-package hse.ru.dragonfly.puller.error;
+package ru.hse.dragonfly.puller.error;
 
 public final class DragonflyPullException extends Exception {
     @java.io.Serial

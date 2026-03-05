@@ -1,9 +1,8 @@
-package hse.ru.dragonfly.puller;
+package ru.hse.dragonfly.puller;
 
 import com.sun.net.httpserver.HttpServer;
-import hse.ru.dragonfly.puller.error.DragonflyPullException;
-import hse.ru.dragonfly.puller.model.PullRequest;
-import hse.ru.dragonfly.puller.model.PullResult;
+import ru.hse.dragonfly.puller.model.PullRequest;
+import ru.hse.dragonfly.puller.model.PullResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Tag;

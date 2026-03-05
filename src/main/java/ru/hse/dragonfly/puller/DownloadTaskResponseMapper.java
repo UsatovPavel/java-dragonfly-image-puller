@@ -1,4 +1,4 @@
-package hse.ru.dragonfly.puller;
+package ru.hse.dragonfly.puller;
 
 import org.dragonflyoss.api.dfdaemon.v2.DownloadTaskResponse;
 

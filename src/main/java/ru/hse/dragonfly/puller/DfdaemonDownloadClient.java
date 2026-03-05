@@ -1,4 +1,4 @@
-package hse.ru.dragonfly.puller;
+package ru.hse.dragonfly.puller;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -8,10 +8,10 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
-import hse.ru.dragonfly.puller.error.DragonflyPullException;
-import hse.ru.dragonfly.puller.error.ErrorKind;
-import hse.ru.dragonfly.puller.model.PullRequest;
-import hse.ru.dragonfly.puller.model.PullResult;
+import ru.hse.dragonfly.puller.error.DragonflyPullException;
+import ru.hse.dragonfly.puller.error.ErrorKind;
+import ru.hse.dragonfly.puller.model.PullRequest;
+import ru.hse.dragonfly.puller.model.PullResult;
 import io.grpc.Deadline;
 import io.grpc.ManagedChannel;
 import io.grpc.Status;

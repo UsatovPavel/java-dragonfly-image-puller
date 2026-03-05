@@ -1,10 +1,10 @@
-package hse.ru.dragonfly.puller;
+package ru.hse.dragonfly.puller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import hse.ru.dragonfly.puller.error.DragonflyPullException;
-import hse.ru.dragonfly.puller.error.ErrorKind;
+import ru.hse.dragonfly.puller.error.DragonflyPullException;
+import ru.hse.dragonfly.puller.error.ErrorKind;
 import org.junit.jupiter.api.Test;
 
 class DfdaemonChannelFactoryTest {

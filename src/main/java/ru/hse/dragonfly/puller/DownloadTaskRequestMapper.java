@@ -1,6 +1,6 @@
-package hse.ru.dragonfly.puller;
+package ru.hse.dragonfly.puller;
 
-import hse.ru.dragonfly.puller.model.PullRequest;
+import ru.hse.dragonfly.puller.model.PullRequest;
 import org.dragonflyoss.api.common.v2.Download;
 import org.dragonflyoss.api.common.v2.Priority;
 import org.dragonflyoss.api.common.v2.TaskType;
