@@ -11,8 +11,8 @@ plugins {
     id("com.google.protobuf") version "0.9.4"
 }
 
-group = "hse.ru"
-version = (findProperty("version") as String?) ?: "1.0-SNAPSHOT"
+group = "ru.hse"
+version = (findProperty("version") as String?) ?: "1.1.1-SNAPSHOT"
 
 repositories {
     mavenCentral()

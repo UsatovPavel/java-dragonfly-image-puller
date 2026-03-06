@@ -4,6 +4,14 @@ set -euo pipefail
 # Local setup for Dragonfly single-node cluster used by local integration tests.
 # Usage: ./scripts/minikube-dragonfly.sh [1]
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VALUES_FILE="${SCRIPT_DIR}/values.yaml"
+
+if [[ ! -f "$VALUES_FILE" ]]; then
+  echo "Missing Helm values file: $VALUES_FILE"
+  exit 1
+fi
+
 NODES="${1:-1}"
 if [[ "$NODES" != "1" ]]; then
   echo "Only single-node mode is supported in this repository."
@@ -42,7 +50,7 @@ helm repo add dragonfly https://dragonflyoss.github.io/helm-charts/ 2>/dev/null 
 helm repo update
 helm uninstall dragonfly -n dragonfly-system 2>/dev/null || true
 helm install --wait --timeout 15m --create-namespace --namespace dragonfly-system \
-  dragonfly dragonfly/dragonfly
+  dragonfly dragonfly/dragonfly -f "$VALUES_FILE"
 
 sudo mkdir -p /var/run/dragonfly/output
 sudo chmod 777 /var/run/dragonfly/output
@@ -65,4 +73,4 @@ test -S /var/run/dragonfly/dfdaemon.sock || {
 }
 
 echo ">>> Ready. Run integration test with:"
-echo "DFDAEMON_ADDR=unix:///var/run/dragonfly/dfdaemon.sock ./gradlew --no-daemon test --tests hse.ru.dragonfly.puller.DragonflyImagePullerLocalIntegrationTest"
+echo "DFDAEMON_ADDR=unix:///var/run/dragonfly/dfdaemon.sock ./gradlew --no-daemon test --tests ru.hse.dragonfly.puller.BlobPullerLocalIntegrationTest"

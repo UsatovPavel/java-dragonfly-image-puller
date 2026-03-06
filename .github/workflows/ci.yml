@@ -61,7 +61,7 @@ jobs:
       - name: Dragonfly integration test
         run: |
           DFDAEMON_ADDR=unix:///var/run/dragonfly/dfdaemon.sock \
-            ./gradlew --no-daemon test --tests ru.hse.dragonfly.puller.DragonflyImagePullerLocalIntegrationTest
+            ./gradlew --no-daemon test --tests ru.hse.dragonfly.puller.BlobPullerLocalIntegrationTest
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
