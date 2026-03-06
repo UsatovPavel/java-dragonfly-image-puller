@@ -3,8 +3,9 @@ package ru.hse.dragonfly.puller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
-import ru.hse.dragonfly.puller.error.ErrorKind;
+import ru.hse.dragonfly.puller.grpcdfdaemon.DfdaemonChannelFactory;
 import org.junit.jupiter.api.Test;
 
 class DfdaemonChannelFactoryTest {
@@ -15,7 +16,7 @@ class DfdaemonChannelFactoryTest {
                 DragonflyPullException.class,
                 () -> DfdaemonChannelFactory.create(" ")
         );
-        assertEquals(ErrorKind.INVALID_REQUEST, ex.errorKind());
+        assertEquals(DragonflyPullErrorKind.INVALID_REQUEST, ex.errorKind());
     }
 
     @Test
@@ -24,6 +25,6 @@ class DfdaemonChannelFactoryTest {
                 DragonflyPullException.class,
                 () -> DfdaemonChannelFactory.create("localhost:")
         );
-        assertEquals(ErrorKind.INVALID_REQUEST, ex.errorKind());
+        assertEquals(DragonflyPullErrorKind.INVALID_REQUEST, ex.errorKind());
     }
 }

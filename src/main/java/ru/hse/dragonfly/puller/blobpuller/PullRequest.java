@@ -1,4 +1,4 @@
-package ru.hse.dragonfly.puller.model;
+package ru.hse.dragonfly.puller.blobpuller;
 
 import java.nio.file.Path;
 import java.util.Map;

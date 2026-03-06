@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.dragonflyoss.api.dfdaemon.v2.DownloadTaskResponse;
 import org.dragonflyoss.api.dfdaemon.v2.DownloadTaskStartedResponse;
 import org.junit.jupiter.api.Test;
+import ru.hse.dragonfly.puller.grpcdfdaemon.DownloadTaskResponseMapper;
 
 class DownloadTaskResponseMapperTest {
 

@@ -4,19 +4,19 @@ public final class DragonflyPullException extends Exception {
     @java.io.Serial
     private static final long serialVersionUID = 1L;
 
-    private final ErrorKind kind;
+    private final DragonflyPullErrorKind kind;
 
-    public DragonflyPullException(ErrorKind errorKind, String message) {
+    public DragonflyPullException(DragonflyPullErrorKind errorKind, String message) {
         super(message);
         this.kind = errorKind;
     }
 
-    public DragonflyPullException(ErrorKind errorKind, String message, Throwable cause) {
+    public DragonflyPullException(DragonflyPullErrorKind errorKind, String message, Throwable cause) {
         super(message, cause);
         this.kind = errorKind;
     }
 
-    public ErrorKind errorKind() {
+    public DragonflyPullErrorKind errorKind() {
         return kind;
     }
 }

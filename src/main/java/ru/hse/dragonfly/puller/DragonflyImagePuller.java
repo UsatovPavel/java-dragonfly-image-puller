@@ -1,19 +1,24 @@
 package ru.hse.dragonfly.puller;
 
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
-import ru.hse.dragonfly.puller.error.ErrorKind;
-import ru.hse.dragonfly.puller.model.PullRequest;
-import ru.hse.dragonfly.puller.model.PullResult;
+import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
+import ru.hse.dragonfly.puller.blobpuller.BlobPuller;
+import ru.hse.dragonfly.puller.blobpuller.BlobPullGateway;
+import ru.hse.dragonfly.puller.grpcdfdaemon.DfdaemonDownloadClient;
+import ru.hse.dragonfly.puller.blobpuller.PullRequest;
+import ru.hse.dragonfly.puller.blobpuller.PullResult;
+import ru.hse.dragonfly.puller.registry.RegistryPullRequest;
+import ru.hse.dragonfly.puller.registry.RegistryPullRequestMapper;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
 
 public final class DragonflyImagePuller implements Closeable {
-    private final DfdaemonDownloadClient client;
+    private final BlobPullGateway blobPuller;
 
-    private DragonflyImagePuller(DfdaemonDownloadClient client) {
-        this.client = client;
+    DragonflyImagePuller(BlobPullGateway blobPuller) {
+        this.blobPuller = blobPuller;
     }
 
     public static Builder builder() {
@@ -25,12 +30,21 @@ public final class DragonflyImagePuller implements Closeable {
     }
 
     public PullResult pull(PullRequest request) throws DragonflyPullException {
-        return client.pull(request);
+        return blobPuller.pull(request);
+    }
+
+    public PullResult pull(RegistryPullRequest request) throws DragonflyPullException {
+        try {
+            PullRequest transportRequest = RegistryPullRequestMapper.toTransportRequest(request);
+            return blobPuller.pull(transportRequest);
+        } catch (IllegalArgumentException ex) {
+            throw new DragonflyPullException(DragonflyPullErrorKind.INVALID_REQUEST, ex.getMessage(), ex);
+        }
     }
 
     @Override
     public void close() throws IOException {
-        client.close();
+        blobPuller.close();
     }
 
     public static final class Builder {
@@ -92,20 +106,20 @@ public final class DragonflyImagePuller implements Closeable {
                     configuredMaxRetries,
                     configuredGrpcConfig
             );
-            return new DragonflyImagePuller(client);
+            return new DragonflyImagePuller(new BlobPuller(client));
         }
 
         private void validate() throws DragonflyPullException {
             if (configuredAddress == null || configuredAddress.isBlank()) {
-                throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "address must not be blank");
+                throw new DragonflyPullException(DragonflyPullErrorKind.INVALID_REQUEST, "address must not be blank");
             }
             if (configuredRequestTimeout == null
                     || configuredRequestTimeout.isZero()
                     || configuredRequestTimeout.isNegative()) {
-                throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "requestTimeout must be positive");
+                throw new DragonflyPullException(DragonflyPullErrorKind.INVALID_REQUEST, "requestTimeout must be positive");
             }
             if (configuredMaxRetries < 0) {
-                throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "maxRetries must be >= 0");
+                throw new DragonflyPullException(DragonflyPullErrorKind.INVALID_REQUEST, "maxRetries must be >= 0");
             }
             configuredGrpcConfig.validate();
         }

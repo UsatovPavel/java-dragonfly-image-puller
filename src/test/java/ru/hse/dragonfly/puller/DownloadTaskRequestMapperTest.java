@@ -6,7 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Path;
 import java.util.Map;
 
-import ru.hse.dragonfly.puller.model.PullRequest;
+import ru.hse.dragonfly.puller.grpcdfdaemon.DownloadTaskRequestMapper;
+import ru.hse.dragonfly.puller.blobpuller.PullRequest;
 import org.junit.jupiter.api.Test;
 
 class DownloadTaskRequestMapperTest {

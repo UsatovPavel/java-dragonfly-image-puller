@@ -1,4 +1,4 @@
-package ru.hse.dragonfly.puller;
+package ru.hse.dragonfly.puller.grpcdfdaemon;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -11,10 +11,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.time.Duration;
 
+import ru.hse.dragonfly.puller.GrpcClientConfig;
+import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
-import ru.hse.dragonfly.puller.error.ErrorKind;
-import ru.hse.dragonfly.puller.model.PullRequest;
-import ru.hse.dragonfly.puller.model.PullResult;
+import ru.hse.dragonfly.puller.blobpuller.PullRequest;
+import ru.hse.dragonfly.puller.blobpuller.PullResult;
 import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -68,7 +69,7 @@ public final class DfdaemonDownloadClient implements Closeable {
                     maxRetryBackoffMillis
             );
             throw new DragonflyPullException(
-                    ErrorKind.INVALID_REQUEST,
+                    DragonflyPullErrorKind.INVALID_REQUEST,
                     "maxRetryBackoff must be greater than or equal to initialRetryBackoff"
             );
         }
@@ -144,25 +145,29 @@ public final class DfdaemonDownloadClient implements Closeable {
             boolean completed = done.await(requestTimeoutMillis + 1000L, TimeUnit.MILLISECONDS);
             if (!completed) {
                 LOG.error("download task did not complete in expected time: timeoutMs={}", requestTimeoutMillis);
-                throw new DragonflyPullException(ErrorKind.TIMEOUT, "download task exceeded timeout");
+                throw new DragonflyPullException(DragonflyPullErrorKind.TIMEOUT, "download task exceeded timeout");
             }
             cancellableContext.cancel(null);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             LOG.error("download task interrupted while waiting for completion", ex);
-            throw new DragonflyPullException(ErrorKind.INTERNAL, "download task interrupted", ex);
+            throw new DragonflyPullException(DragonflyPullErrorKind.INTERNAL, "download task interrupted", ex);
         }
 
         StatusRuntimeException grpcFailure = grpcError.get();
         if (grpcFailure != null) {
-            ErrorKind kind = mapError(grpcFailure.getStatus().getCode());
+            DragonflyPullErrorKind kind = mapError(grpcFailure.getStatus().getCode());
             LOG.error("download task failed: grpcStatus={} mappedErrorKind={}", grpcFailure.getStatus(), kind, grpcFailure);
             throw new DragonflyPullException(kind, "download task failed: " + grpcFailure.getStatus(), grpcFailure);
         }
         Throwable internalFailure = internalError.get();
         if (internalFailure != null) {
             LOG.error("download task failed with unexpected internal error", internalFailure);
-            throw new DragonflyPullException(ErrorKind.INTERNAL, "download task failed with internal error", internalFailure);
+            throw new DragonflyPullException(
+                    DragonflyPullErrorKind.INTERNAL,
+                    "download task failed with internal error",
+                    internalFailure
+            );
         }
         if (!finished.get()) {
             LOG.warn("download task stream completed without finished marker");
@@ -170,7 +175,7 @@ public final class DfdaemonDownloadClient implements Closeable {
         if (!Files.exists(request.outputPath())) {
             LOG.error("download task finished but output file missing: outputPath={}", request.outputPath());
             throw new DragonflyPullException(
-                    ErrorKind.IO,
+                    DragonflyPullErrorKind.IO,
                     "dfdaemon completed without output file: " + request.outputPath()
             );
         }
@@ -194,12 +199,12 @@ public final class DfdaemonDownloadClient implements Closeable {
         }
     }
 
-    private static ErrorKind mapError(Status.Code code) {
+    private static DragonflyPullErrorKind mapError(Status.Code code) {
         return switch (code) {
-            case DEADLINE_EXCEEDED -> ErrorKind.TIMEOUT;
-            case UNAVAILABLE, RESOURCE_EXHAUSTED -> ErrorKind.UNAVAILABLE;
-            case INVALID_ARGUMENT -> ErrorKind.INVALID_REQUEST;
-            default -> ErrorKind.INTERNAL;
+            case DEADLINE_EXCEEDED -> DragonflyPullErrorKind.TIMEOUT;
+            case UNAVAILABLE, RESOURCE_EXHAUSTED -> DragonflyPullErrorKind.UNAVAILABLE;
+            case INVALID_ARGUMENT -> DragonflyPullErrorKind.INVALID_REQUEST;
+            default -> DragonflyPullErrorKind.INTERNAL;
         };
     }
 
@@ -207,7 +212,10 @@ public final class DfdaemonDownloadClient implements Closeable {
         java.time.Duration effective = requestTimeout == null ? DEFAULT_REQUEST_TIMEOUT : requestTimeout;
         if (effective.isZero() || effective.isNegative()) {
             LOG.warn("invalid requestTimeout provided: requestTimeout={}", requestTimeout);
-            throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "requestTimeout must be positive");
+            throw new DragonflyPullException(
+                    DragonflyPullErrorKind.INVALID_REQUEST,
+                    "requestTimeout must be positive"
+            );
         }
         return effective.toMillis();
     }
@@ -218,7 +226,7 @@ public final class DfdaemonDownloadClient implements Closeable {
         }
         if (maxRetries < 0) {
             LOG.warn("invalid maxRetries provided: maxRetries={}", maxRetries);
-            throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "maxRetries must be >= 0");
+            throw new DragonflyPullException(DragonflyPullErrorKind.INVALID_REQUEST, "maxRetries must be >= 0");
         }
         return maxRetries + 1;
     }

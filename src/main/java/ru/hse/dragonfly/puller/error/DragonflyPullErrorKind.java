@@ -1,6 +1,6 @@
 package ru.hse.dragonfly.puller.error;
 
-public enum ErrorKind {
+public enum DragonflyPullErrorKind {
     INVALID_REQUEST,
     TIMEOUT,
     UNAVAILABLE,

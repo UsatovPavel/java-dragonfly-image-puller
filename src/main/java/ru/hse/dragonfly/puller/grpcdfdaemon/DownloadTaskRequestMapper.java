@@ -1,6 +1,6 @@
-package ru.hse.dragonfly.puller;
+package ru.hse.dragonfly.puller.grpcdfdaemon;
 
-import ru.hse.dragonfly.puller.model.PullRequest;
+import ru.hse.dragonfly.puller.blobpuller.PullRequest;
 import org.dragonflyoss.api.common.v2.Download;
 import org.dragonflyoss.api.common.v2.Priority;
 import org.dragonflyoss.api.common.v2.TaskType;

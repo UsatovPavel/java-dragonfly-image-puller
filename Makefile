@@ -1,9 +1,13 @@
-.PHONY: help setup build test diagnostics
-
+.PHONY: help setup build test diagnostics investigate-container investigate-worker
+# Write log/diagnostics in log.txt
+# or manually set (make diagnostics OUT=diag.txt)
 DFDAEMON_ADDR ?= unix:///var/run/dragonfly/dfdaemon.sock
-DRAGONFLY_TEST ?= ru.hse.dragonfly.puller.DragonflyImagePullerLocalIntegrationTest
+DRAGONFLY_TEST ?= ru.hse.dragonfly.puller.BlobPullerLocalIntegrationTest
 DRAGONFLY_NS ?= dragonfly-system
 DFDAEMON_SOCKET ?= /var/run/dragonfly/dfdaemon.sock
+TARGET_CONTAINER_POD ?= dragonfly-seed-client-2
+TARGET_WORKER_POD ?= dragonfly-redis-replicas-0
+OUT ?= logs.txt
 
 help:
 	@echo "Targets:"
@@ -28,17 +32,37 @@ test:
 	DFDAEMON_ADDR=$(DFDAEMON_ADDR) ./gradlew  test
 
 diagnostics:
-	@echo "== minikube status =="
-	-@minikube status
-	@echo ""
-	@echo "== dragonfly namespace pods =="
-	-@kubectl get pods -n $(DRAGONFLY_NS) -o wide
-	@echo ""
-	@echo "== dragonfly namespace events (last 40) =="
-	-@kubectl get events -n $(DRAGONFLY_NS) --sort-by='.lastTimestamp' | tail -n 40 > logs.txt
-	@echo ""
-	@echo "== dfdaemon socket =="
-	-@ls -lah $(DFDAEMON_SOCKET)
-	@echo ""
-	@echo "== dfdaemon logs (tail 120) =="
-	-@kubectl logs -n $(DRAGONFLY_NS) -l app.kubernetes.io/name=dfdaemon --tail=120 >> logs.txt
+	@echo "== minikube status ==" > $(OUT)
+	-@minikube status >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== dragonfly namespace pods ==" >> $(OUT)
+	-@kubectl get pods -n $(DRAGONFLY_NS) -o wide >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== dragonfly namespace events (last 40) ==" >> $(OUT)
+	-@kubectl get events -n $(DRAGONFLY_NS) --sort-by='.lastTimestamp' | tail -n 40 >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== dfdaemon socket ==" >> $(OUT)
+	-@ls -lah $(DFDAEMON_SOCKET) >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== dfdaemon logs (tail 120) ==" >> $(OUT)
+	-@kubectl logs -n $(DRAGONFLY_NS) -l app.kubernetes.io/name=dfdaemon --tail=120 >> $(OUT) 2>&1
+
+investigate-container:
+	@echo "== describe $(TARGET_CONTAINER_POD) ==" > $(OUT)
+	-@kubectl describe pod -n $(DRAGONFLY_NS) $(TARGET_CONTAINER_POD) >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== logs $(TARGET_CONTAINER_POD) ==" >> $(OUT)
+	-@kubectl logs -n $(DRAGONFLY_NS) $(TARGET_CONTAINER_POD) >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== previous logs $(TARGET_CONTAINER_POD) ==" >> $(OUT)
+	-@kubectl logs -n $(DRAGONFLY_NS) $(TARGET_CONTAINER_POD) --previous >> $(OUT) 2>&1
+
+investigate-worker:
+	@echo "== describe $(TARGET_WORKER_POD) ==" > $(OUT)
+	-@kubectl describe pod -n $(DRAGONFLY_NS) $(TARGET_WORKER_POD) >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== logs $(TARGET_WORKER_POD) ==" >> $(OUT)
+	-@kubectl logs -n $(DRAGONFLY_NS) $(TARGET_WORKER_POD) >> $(OUT) 2>&1
+	@echo "" >> $(OUT)
+	@echo "== previous logs $(TARGET_WORKER_POD) ==" >> $(OUT)
+	-@kubectl logs -n $(DRAGONFLY_NS) $(TARGET_WORKER_POD) --previous >> $(OUT) 2>&1

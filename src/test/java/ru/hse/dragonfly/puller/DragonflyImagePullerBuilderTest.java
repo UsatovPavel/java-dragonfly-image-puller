@@ -1,7 +1,7 @@
 package ru.hse.dragonfly.puller;
 
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
-import ru.hse.dragonfly.puller.error.ErrorKind;
+import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -18,7 +18,7 @@ class DragonflyImagePullerBuilderTest {
                 DragonflyPullException.class,
                 () -> DragonflyImagePuller.builder().withAddress(" ").build()
         );
-        assertEquals(ErrorKind.INVALID_REQUEST, ex.errorKind());
+        assertEquals(DragonflyPullErrorKind.INVALID_REQUEST, ex.errorKind());
     }
 
     @Test
@@ -27,7 +27,7 @@ class DragonflyImagePullerBuilderTest {
                 DragonflyPullException.class,
                 () -> DragonflyImagePuller.builder().withRequestTimeout(Duration.ZERO).build()
         );
-        assertEquals(ErrorKind.INVALID_REQUEST, ex.errorKind());
+        assertEquals(DragonflyPullErrorKind.INVALID_REQUEST, ex.errorKind());
     }
 
     @Test
@@ -36,7 +36,7 @@ class DragonflyImagePullerBuilderTest {
                 DragonflyPullException.class,
                 () -> DragonflyImagePuller.builder().withMaxRetries(-1).build()
         );
-        assertEquals(ErrorKind.INVALID_REQUEST, ex.errorKind());
+        assertEquals(DragonflyPullErrorKind.INVALID_REQUEST, ex.errorKind());
     }
 
     @Test

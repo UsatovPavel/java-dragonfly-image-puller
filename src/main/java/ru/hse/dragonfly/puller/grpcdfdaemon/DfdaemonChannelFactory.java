@@ -1,7 +1,7 @@
-package ru.hse.dragonfly.puller;
+package ru.hse.dragonfly.puller.grpcdfdaemon;
 
+import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
-import ru.hse.dragonfly.puller.error.ErrorKind;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
@@ -23,7 +23,10 @@ public final class DfdaemonChannelFactory {
     public static ManagedChannelBuilder<?> createBuilder(String address) throws DragonflyPullException {
         if (address == null || address.isBlank()) {
             LOG.warn("dfdaemon channel creation failed: blank address");
-            throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "dfdaemon address must not be blank");
+            throw new DragonflyPullException(
+                    DragonflyPullErrorKind.INVALID_REQUEST,
+                    "dfdaemon address must not be blank"
+            );
         }
 
         String trimmed = address.trim();
@@ -38,7 +41,10 @@ public final class DfdaemonChannelFactory {
         String path = address.substring(UNIX_SCHEME.length()).trim();
         if (path.isEmpty()) {
             LOG.warn("dfdaemon channel creation failed: empty unix path, address={}", address);
-            throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "invalid unix address: " + address);
+            throw new DragonflyPullException(
+                    DragonflyPullErrorKind.INVALID_REQUEST,
+                    "invalid unix address: " + address
+            );
         }
 
         try {
@@ -51,7 +57,7 @@ public final class DfdaemonChannelFactory {
             return channelBuilder;
         } catch (RuntimeException ex) {
             LOG.error("dfdaemon channel builder creation failed: transport=unix path={}", path, ex);
-            throw new DragonflyPullException(ErrorKind.INTERNAL, "failed to create unix channel", ex);
+            throw new DragonflyPullException(DragonflyPullErrorKind.INTERNAL, "failed to create unix channel", ex);
         }
     }
 
@@ -60,7 +66,7 @@ public final class DfdaemonChannelFactory {
         if (colon <= 0 || colon == address.length() - 1) {
             LOG.warn("dfdaemon channel creation failed: invalid tcp address format, address={}", address);
             throw new DragonflyPullException(
-                    ErrorKind.INVALID_REQUEST,
+                    DragonflyPullErrorKind.INVALID_REQUEST,
                     "invalid address, expected unix:///path or host:port: " + address
             );
         }
@@ -72,7 +78,11 @@ public final class DfdaemonChannelFactory {
             port = Integer.parseInt(portRaw);
         } catch (NumberFormatException ex) {
             LOG.warn("dfdaemon channel creation failed: invalid tcp port, host={} port={}", host, portRaw, ex);
-            throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, "invalid tcp port: " + portRaw, ex);
+            throw new DragonflyPullException(
+                    DragonflyPullErrorKind.INVALID_REQUEST,
+                    "invalid tcp port: " + portRaw,
+                    ex
+            );
         }
 
         try {
@@ -81,7 +91,7 @@ public final class DfdaemonChannelFactory {
             return channelBuilder;
         } catch (RuntimeException ex) {
             LOG.error("dfdaemon channel builder creation failed: transport=tcp host={} port={}", host, port, ex);
-            throw new DragonflyPullException(ErrorKind.INTERNAL, "failed to create tcp channel", ex);
+            throw new DragonflyPullException(DragonflyPullErrorKind.INTERNAL, "failed to create tcp channel", ex);
         }
     }
 }

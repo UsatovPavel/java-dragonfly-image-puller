@@ -1,8 +1,10 @@
 package ru.hse.dragonfly.puller;
 
 import com.sun.net.httpserver.HttpServer;
-import ru.hse.dragonfly.puller.model.PullRequest;
-import ru.hse.dragonfly.puller.model.PullResult;
+import ru.hse.dragonfly.puller.blobpuller.BlobPuller;
+import ru.hse.dragonfly.puller.blobpuller.PullRequest;
+import ru.hse.dragonfly.puller.blobpuller.PullResult;
+import ru.hse.dragonfly.puller.grpcdfdaemon.DfdaemonDownloadClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Tag;
@@ -24,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag("local")
-class DragonflyImagePullerLocalIntegrationTest {
+class BlobPullerLocalIntegrationTest {
     private static final String DFDAEMON_ADDR = System.getenv()
             .getOrDefault("DFDAEMON_ADDR", "unix:///var/run/dragonfly/dfdaemon.sock");
 
@@ -57,11 +59,12 @@ class DragonflyImagePullerLocalIntegrationTest {
         Files.deleteIfExists(firstOutput);
         Files.deleteIfExists(secondOutput);
 
-        try (DragonflyImagePuller puller = DragonflyImagePuller.builder()
-                .withAddress(DFDAEMON_ADDR)
-                .withRequestTimeout(Duration.ofSeconds(30))
-                .withMaxRetries(1)
-                .build()) {
+        try (BlobPuller puller = new BlobPuller(new DfdaemonDownloadClient(
+                DFDAEMON_ADDR,
+                Duration.ofSeconds(30),
+                1,
+                null
+        ))) {
             PullResult first = puller.pull(new PullRequest(blobUrl, digest, firstOutput, Map.of()));
             assertTrue(Files.exists(first.path()), "first pull should create output file");
             assertEquals(payload.length, Files.size(first.path()), "first pull size must match");

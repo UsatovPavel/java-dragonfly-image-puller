@@ -2,8 +2,8 @@ package ru.hse.dragonfly.puller;
 
 import java.time.Duration;
 
+import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
-import ru.hse.dragonfly.puller.error.ErrorKind;
 
 public final class GrpcClientConfig {
     private static final Duration DEFAULT_KEEP_ALIVE_TIME = Duration.ofSeconds(30);
@@ -100,13 +100,13 @@ public final class GrpcClientConfig {
         requirePositive(maxRetryBackoff, "grpcMaxRetryBackoff");
         if (maxRetryBackoff.compareTo(initialRetryBackoff) < 0) {
             throw new DragonflyPullException(
-                    ErrorKind.INVALID_REQUEST,
+                    DragonflyPullErrorKind.INVALID_REQUEST,
                     "grpcMaxRetryBackoff must be >= grpcInitialRetryBackoff"
             );
         }
         if (retryBackoffMultiplierValue <= MIN_RETRY_BACKOFF_MULTIPLIER_EXCLUSIVE) {
             throw new DragonflyPullException(
-                    ErrorKind.INVALID_REQUEST,
+                    DragonflyPullErrorKind.INVALID_REQUEST,
                     "grpcRetryBackoffMultiplier must be greater than "
                             + MIN_RETRY_BACKOFF_MULTIPLIER_EXCLUSIVE
             );
@@ -135,7 +135,10 @@ public final class GrpcClientConfig {
 
     private static void requirePositive(Duration value, String fieldName) throws DragonflyPullException {
         if (value == null || value.isZero() || value.isNegative()) {
-            throw new DragonflyPullException(ErrorKind.INVALID_REQUEST, fieldName + " must be positive");
+            throw new DragonflyPullException(
+                    DragonflyPullErrorKind.INVALID_REQUEST,
+                    fieldName + " must be positive"
+            );
         }
     }
 }

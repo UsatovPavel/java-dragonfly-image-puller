@@ -1,4 +1,4 @@
-package ru.hse.dragonfly.puller;
+package ru.hse.dragonfly.puller.grpcdfdaemon;
 
 import org.dragonflyoss.api.dfdaemon.v2.DownloadTaskResponse;
 
