@@ -37,3 +37,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Internal usage ###
+internalDocs/*
+Исправления*
+План*
+logs.txt
+out.txt
