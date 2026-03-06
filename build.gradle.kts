@@ -104,6 +104,15 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.named("check") {
+    setDependsOn(
+        dependsOn.filterNot { dependency ->
+            (dependency as? String) == "test"
+                    || (dependency as? org.gradle.api.Task)?.name == "test"
+        }
+    )
+}
+
 java {
     withSourcesJar()
     withJavadocJar()

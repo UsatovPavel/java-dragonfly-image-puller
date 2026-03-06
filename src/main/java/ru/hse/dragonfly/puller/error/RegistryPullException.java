@@ -1,5 +1,7 @@
 package ru.hse.dragonfly.puller.error;
+
 import java.io.Serial;
+
 public final class RegistryPullException extends Exception {
     @Serial
     private static final long serialVersionUID = 1L;

@@ -19,12 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DragonflyImagePullerFacadeTest {
+    private static final String BIN_SUFFIX = ".bin";
 
     @Test
     void pullRegistryRequestMapsAndDelegatesToBlobPuller() throws Exception {
-        Path output = Files.createTempFile("puller-facade-", ".bin");
+        Path output = Files.createTempFile("puller-facade-", BIN_SUFFIX);
         Files.deleteIfExists(output);
-        Path returnedPath = Files.createTempFile("puller-facade-result-", ".bin");
+        Path returnedPath = Files.createTempFile("puller-facade-result-", BIN_SUFFIX);
         Files.deleteIfExists(returnedPath);
 
         AtomicReference<PullRequest> captured = new AtomicReference<>();
@@ -50,7 +51,7 @@ class DragonflyImagePullerFacadeTest {
 
     @Test
     void pullRegistryRequestWithInvalidInputReturnsInvalidRequest() throws Exception {
-        Path output = Files.createTempFile("puller-facade-invalid-", ".bin");
+        Path output = Files.createTempFile("puller-facade-invalid-", BIN_SUFFIX);
         Files.deleteIfExists(output);
 
         try (DragonflyImagePuller puller = new DragonflyImagePuller(new FakeBlobPullGateway(new AtomicReference<>(), output))) {
@@ -73,9 +74,9 @@ class DragonflyImagePullerFacadeTest {
 
     @Test
     void pullRegistryRequestJwtHasPriorityOverBasic() throws Exception {
-        Path output = Files.createTempFile("puller-facade-auth-", ".bin");
+        Path output = Files.createTempFile("puller-facade-auth-", BIN_SUFFIX);
         Files.deleteIfExists(output);
-        Path returnedPath = Files.createTempFile("puller-facade-auth-result-", ".bin");
+        Path returnedPath = Files.createTempFile("puller-facade-auth-result-", BIN_SUFFIX);
         Files.deleteIfExists(returnedPath);
 
         AtomicReference<PullRequest> captured = new AtomicReference<>();
