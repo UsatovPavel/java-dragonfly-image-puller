@@ -31,6 +31,8 @@ public final class DfdaemonDownloadClient implements Closeable {
     private static final Logger LOG = LoggerFactory.getLogger(DfdaemonDownloadClient.class);
     private static final Duration DEFAULT_REQUEST_TIMEOUT = Duration.ofSeconds(120);
     private static final int DEFAULT_MAX_ATTEMPTS = 2;
+    private static final int MIN_RETRY_ATTEMPTS = 2;
+    private static final long ZERO_NANOS_PART = 0L;
 
     private final ManagedChannel channel;
     private final DfdaemonDownloadGrpc.DfdaemonDownloadStub asyncStub;
@@ -72,14 +74,17 @@ public final class DfdaemonDownloadClient implements Closeable {
         }
         ManagedChannelBuilder<?> builder = DfdaemonChannelFactory.createBuilder(dfdaemonAddress)
                 .keepAliveTime(keepAliveTimeMillis, TimeUnit.MILLISECONDS)
-                .keepAliveTimeout(keepAliveTimeoutMillis, TimeUnit.MILLISECONDS)
-                .enableRetry()
-                .defaultServiceConfig(buildRetryServiceConfig(
-                        maxAttempts,
-                        initialRetryBackoffMillis,
-                        maxRetryBackoffMillis,
-                        this.retryBackoffMultiplier
-                ));
+                .keepAliveTimeout(keepAliveTimeoutMillis, TimeUnit.MILLISECONDS);
+        if (maxAttempts >= MIN_RETRY_ATTEMPTS) {
+            builder = builder.enableRetry().defaultServiceConfig(buildRetryServiceConfig(
+                    maxAttempts,
+                    initialRetryBackoffMillis,
+                    maxRetryBackoffMillis,
+                    this.retryBackoffMultiplier
+            ));
+        } else {
+            builder = builder.disableRetry();
+        }
         this.channel = builder.build();
         this.asyncStub = DfdaemonDownloadGrpc.newStub(channel);
         LOG.info(
@@ -109,9 +114,7 @@ public final class DfdaemonDownloadClient implements Closeable {
         AtomicBoolean finished = new AtomicBoolean(false);
         AtomicReference<StatusRuntimeException> grpcError = new AtomicReference<>();
         AtomicReference<Throwable> internalError = new AtomicReference<>();
-        Context.CancellableContext cancellableContext = Context.current().withCancellation();
-
-        try {
+        try (Context.CancellableContext cancellableContext = Context.current().withCancellation()) {
             cancellableContext.run(() -> asyncStub
                     .withDeadlineAfter(requestTimeoutMillis, TimeUnit.MILLISECONDS)
                     .downloadTask(protoRequest, new StreamObserver<>() {
@@ -143,12 +146,11 @@ public final class DfdaemonDownloadClient implements Closeable {
                 LOG.error("download task did not complete in expected time: timeoutMs={}", requestTimeoutMillis);
                 throw new DragonflyPullException(ErrorKind.TIMEOUT, "download task exceeded timeout");
             }
+            cancellableContext.cancel(null);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             LOG.error("download task interrupted while waiting for completion", ex);
             throw new DragonflyPullException(ErrorKind.INTERNAL, "download task interrupted", ex);
-        } finally {
-            cancellableContext.cancel(null);
         }
 
         StatusRuntimeException grpcFailure = grpcError.get();
@@ -244,7 +246,7 @@ public final class DfdaemonDownloadClient implements Closeable {
     private static String toGrpcDuration(long millis) {
         long secondsPart = millis / 1000L;
         long nanosPart = (millis % 1000L) * 1_000_000L;
-        if (nanosPart == 0L) {
+        if (nanosPart == ZERO_NANOS_PART) {
             return secondsPart + "s";
         }
         return secondsPart + "." + String.format("%09d", nanosPart) + "s";

@@ -11,25 +11,26 @@ public final class GrpcClientConfig {
     private static final Duration DEFAULT_INITIAL_RETRY_BACKOFF = Duration.ofMillis(500);
     private static final Duration DEFAULT_MAX_RETRY_BACKOFF = Duration.ofSeconds(5);
     private static final double DEFAULT_RETRY_BACKOFF_MULTIPLIER = 2.0;
+    private static final double MIN_RETRY_BACKOFF_MULTIPLIER_EXCLUSIVE = 1.0;
 
     private final Duration keepAliveTime;
     private final Duration keepAliveTimeout;
     private final Duration initialRetryBackoff;
     private final Duration maxRetryBackoff;
-    private final double retryBackoffMultiplier;
+    private final double retryBackoffMultiplierValue;
 
     private GrpcClientConfig(
             Duration keepAliveTime,
             Duration keepAliveTimeout,
             Duration initialRetryBackoff,
             Duration maxRetryBackoff,
-            double retryBackoffMultiplier
+            double retryBackoffMultiplierValue
     ) {
         this.keepAliveTime = keepAliveTime;
         this.keepAliveTimeout = keepAliveTimeout;
         this.initialRetryBackoff = initialRetryBackoff;
         this.maxRetryBackoff = maxRetryBackoff;
-        this.retryBackoffMultiplier = retryBackoffMultiplier;
+        this.retryBackoffMultiplierValue = retryBackoffMultiplierValue;
     }
 
     public static GrpcClientConfig defaults() {
@@ -48,7 +49,7 @@ public final class GrpcClientConfig {
                 keepAliveTimeout,
                 initialRetryBackoff,
                 maxRetryBackoff,
-                retryBackoffMultiplier
+                retryBackoffMultiplierValue
         );
     }
 
@@ -58,7 +59,7 @@ public final class GrpcClientConfig {
                 value,
                 initialRetryBackoff,
                 maxRetryBackoff,
-                retryBackoffMultiplier
+                retryBackoffMultiplierValue
         );
     }
 
@@ -68,7 +69,7 @@ public final class GrpcClientConfig {
                 keepAliveTimeout,
                 value,
                 maxRetryBackoff,
-                retryBackoffMultiplier
+                retryBackoffMultiplierValue
         );
     }
 
@@ -78,7 +79,7 @@ public final class GrpcClientConfig {
                 keepAliveTimeout,
                 initialRetryBackoff,
                 value,
-                retryBackoffMultiplier
+                retryBackoffMultiplierValue
         );
     }
 
@@ -103,10 +104,11 @@ public final class GrpcClientConfig {
                     "grpcMaxRetryBackoff must be >= grpcInitialRetryBackoff"
             );
         }
-        if (retryBackoffMultiplier <= 1.0) {
+        if (retryBackoffMultiplierValue <= MIN_RETRY_BACKOFF_MULTIPLIER_EXCLUSIVE) {
             throw new DragonflyPullException(
                     ErrorKind.INVALID_REQUEST,
-                    "grpcRetryBackoffMultiplier must be greater than 1.0"
+                    "grpcRetryBackoffMultiplier must be greater than "
+                            + MIN_RETRY_BACKOFF_MULTIPLIER_EXCLUSIVE
             );
         }
     }
@@ -128,7 +130,7 @@ public final class GrpcClientConfig {
     }
 
     public double retryBackoffMultiplier() {
-        return retryBackoffMultiplier;
+        return retryBackoffMultiplierValue;
     }
 
     private static void requirePositive(Duration value, String fieldName) throws DragonflyPullException {
