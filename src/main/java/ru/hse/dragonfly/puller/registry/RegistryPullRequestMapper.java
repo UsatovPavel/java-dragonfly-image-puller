@@ -35,26 +35,19 @@ public final class RegistryPullRequestMapper {
 
     private static Map<String, String> buildHeaders(RegistryPullRequest request) {
         Map<String, String> headers = new HashMap<>();
-        if (applyJwtAuthorizationHeader(request.auth(), headers)) {
-            return headers;
-        }
-        applyBasicAuthorizationHeader(request.auth(), headers);
+        applyAuthorizationHeader(request.auth(), headers);
         return headers;
     }
 
-    private static boolean applyJwtAuthorizationHeader(RegistryAuth auth, Map<String, String> headers) {
-        if (!auth.hasJwtToken()) {
-            return false;
-        }
-        headers.put("Authorization", "Bearer " + auth.jwtToken().trim());
-        return true;
-    }
-
-    private static void applyBasicAuthorizationHeader(RegistryAuth auth, Map<String, String> headers) {
-        if (!auth.hasBasicAuth()) {
+    private static void applyAuthorizationHeader(RegistryAuth auth, Map<String, String> headers) {
+        if (auth instanceof RegistryAuth.Bearer bearer) {
+            headers.put("Authorization", "Bearer " + bearer.token().trim());
             return;
         }
-        String credentials = auth.basicAuthUsername() + ":" + auth.basicAuthPassword();
+        if (!(auth instanceof RegistryAuth.Basic basic)) {
+            return;
+        }
+        String credentials = basic.username() + ":" + basic.password();
         String base64 = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         headers.put("Authorization", "Basic " + base64);
     }

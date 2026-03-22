@@ -49,4 +49,14 @@ class DragonflyImagePullerBuilderTest {
             // no-op
         }
     }
+
+    @Test
+    void buildWorksWithInfiniteTimeoutByDefault() throws DragonflyPullException, IOException {
+        try (DragonflyImagePuller ignored = DragonflyImagePuller.builder()
+                .withAddress("localhost:65001")
+                .withMaxRetries(0)
+                .build()) {
+            // no-op
+        }
+    }
 }

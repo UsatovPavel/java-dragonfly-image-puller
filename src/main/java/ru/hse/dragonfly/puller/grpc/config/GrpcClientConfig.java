@@ -1,4 +1,4 @@
-package ru.hse.dragonfly.puller;
+package ru.hse.dragonfly.puller.grpc.config;
 
 import java.time.Duration;
 

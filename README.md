@@ -36,10 +36,13 @@ Input is `RegistryPullRequest`:
 - `auth` (`RegistryAuth`)
 - `outputPath`
 
+`pull(...)` returns `CompletableFuture<PullResult>`.
+
 Authentication options in `RegistryAuth`:
 
-- basic auth (`basicAuthUsername`, `basicAuthPassword`)
-- jwt token (`jwtToken`)
+- `RegistryAuth.none()`
+- `RegistryAuth.basic(username, password)`
+- `RegistryAuth.bearer(token)`
 
 ## Quick Start
 
@@ -61,7 +64,7 @@ try (DragonflyImagePuller puller = DragonflyImagePuller.builder()
             RegistryAuth.none(),
             Path.of("/tmp/blob.bin")
     );
-    puller.pull(request);
+    puller.pull(request).join();
 }
 ```
 
@@ -77,6 +80,8 @@ try (DragonflyImagePuller puller = DragonflyImagePuller.builder()
 - `withGrpcInitialRetryBackoff(Duration)`
 - `withGrpcMaxRetryBackoff(Duration)`
 - `withGrpcRetryBackoffMultiplier(double)`
+
+If `withRequestTimeout(...)` is not set, pull requests run without a deadline (infinite timeout).
 
 ## Error Types
 
@@ -94,6 +99,9 @@ Registry-specific errors (`RegistryPullErrorKind`):
 - `FORBIDDEN`
 - `NOT_FOUND`
 - `TLS_ERROR`
+
+## Warnings
+  - TCP `host:port` uses plaintext gRPC transport (no TLS), use only in trusted/internal network.
 
 ## Development
 

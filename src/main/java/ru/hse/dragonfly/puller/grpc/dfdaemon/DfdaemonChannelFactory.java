@@ -1,4 +1,4 @@
-package ru.hse.dragonfly.puller.grpcdfdaemon;
+package ru.hse.dragonfly.puller.grpc.dfdaemon;
 
 import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
@@ -87,6 +87,12 @@ public final class DfdaemonChannelFactory {
 
         try {
             ManagedChannelBuilder<?> channelBuilder = ManagedChannelBuilder.forAddress(host, port).usePlaintext();
+            LOG.warn(
+                    "dfdaemon tcp channel uses plaintext transport (no TLS): host={} port={}; "
+                            + "use only in trusted/internal network",
+                    host,
+                    port
+            );
             LOG.info("dfdaemon channel builder created: transport=tcp host={} port={} plaintext=true", host, port);
             return channelBuilder;
         } catch (RuntimeException ex) {

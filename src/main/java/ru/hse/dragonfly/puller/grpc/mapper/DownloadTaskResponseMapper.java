@@ -1,4 +1,4 @@
-package ru.hse.dragonfly.puller.grpcdfdaemon;
+package ru.hse.dragonfly.puller.grpc.mapper;
 
 import org.dragonflyoss.api.dfdaemon.v2.DownloadTaskResponse;
 

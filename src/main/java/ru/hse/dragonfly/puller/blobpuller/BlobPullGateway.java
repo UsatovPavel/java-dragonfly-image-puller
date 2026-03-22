@@ -1,9 +1,9 @@
 package ru.hse.dragonfly.puller.blobpuller;
 
 import java.io.Closeable;
-
-import ru.hse.dragonfly.puller.error.DragonflyPullException;
+import java.util.concurrent.CompletableFuture;
+import org.jetbrains.annotations.NotNull;
 
 public interface BlobPullGateway extends Closeable {
-    PullResult pull(PullRequest request) throws DragonflyPullException;
+    @NotNull CompletableFuture<PullResult> pull(@NotNull PullRequest request);
 }

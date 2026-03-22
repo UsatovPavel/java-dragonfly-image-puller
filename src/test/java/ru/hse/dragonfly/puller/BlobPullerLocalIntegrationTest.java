@@ -1,10 +1,9 @@
 package ru.hse.dragonfly.puller;
 
 import com.sun.net.httpserver.HttpServer;
-import ru.hse.dragonfly.puller.blobpuller.BlobPuller;
 import ru.hse.dragonfly.puller.blobpuller.PullRequest;
 import ru.hse.dragonfly.puller.blobpuller.PullResult;
-import ru.hse.dragonfly.puller.grpcdfdaemon.DfdaemonDownloadClient;
+import ru.hse.dragonfly.puller.grpc.dfdaemon.DfdaemonDownloadClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Tag;
@@ -59,20 +58,20 @@ class BlobPullerLocalIntegrationTest {
         Files.deleteIfExists(firstOutput);
         Files.deleteIfExists(secondOutput);
 
-        try (BlobPuller puller = new BlobPuller(new DfdaemonDownloadClient(
+        try (DfdaemonDownloadClient puller = new DfdaemonDownloadClient(
                 DFDAEMON_ADDR,
                 Duration.ofSeconds(30),
                 1,
                 null
-        ))) {
-            PullResult first = puller.pull(new PullRequest(blobUrl, digest, firstOutput, Map.of()));
+        )) {
+            PullResult first = puller.pull(new PullRequest(blobUrl, digest, firstOutput, Map.of())).join();
             assertTrue(Files.exists(first.path()), "first pull should create output file");
             assertEquals(payload.length, Files.size(first.path()), "first pull size must match");
             assertTrue(blobRequests.get() >= 1, "first pull should hit source at least once");
 
             int requestsAfterFirstPull = blobRequests.get();
 
-            PullResult second = puller.pull(new PullRequest(blobUrl, digest, secondOutput, Map.of()));
+            PullResult second = puller.pull(new PullRequest(blobUrl, digest, secondOutput, Map.of())).join();
             assertTrue(Files.exists(second.path()), "second pull should create output file");
             assertEquals(payload.length, Files.size(second.path()), "second pull size must match");
             assertEquals(requestsAfterFirstPull, blobRequests.get(),

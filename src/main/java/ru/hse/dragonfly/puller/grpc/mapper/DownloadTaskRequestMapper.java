@@ -1,4 +1,4 @@
-package ru.hse.dragonfly.puller.grpcdfdaemon;
+package ru.hse.dragonfly.puller.grpc.mapper;
 
 import ru.hse.dragonfly.puller.blobpuller.PullRequest;
 import org.dragonflyoss.api.common.v2.Download;

@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import ru.hse.dragonfly.puller.error.DragonflyPullErrorKind;
 import ru.hse.dragonfly.puller.error.DragonflyPullException;
-import ru.hse.dragonfly.puller.grpcdfdaemon.DfdaemonChannelFactory;
+import ru.hse.dragonfly.puller.grpc.dfdaemon.DfdaemonChannelFactory;
 import org.junit.jupiter.api.Test;
 
 class DfdaemonChannelFactoryTest {

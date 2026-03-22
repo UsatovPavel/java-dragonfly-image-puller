@@ -19,6 +19,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly("org.jetbrains:annotations:26.0.2")
     implementation("com.google.protobuf:protobuf-java:4.27.2")
     implementation("io.grpc:grpc-protobuf:1.79.0")
     implementation("io.grpc:grpc-stub:1.79.0")
@@ -28,6 +29,7 @@ dependencies {
     compileOnly("org.apache.tomcat:annotations-api:6.0.53")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testCompileOnly("org.jetbrains:annotations:26.0.2")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
