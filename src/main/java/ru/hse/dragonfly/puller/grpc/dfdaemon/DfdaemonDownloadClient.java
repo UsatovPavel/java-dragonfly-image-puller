@@ -18,7 +18,6 @@ import ru.hse.dragonfly.puller.error.DragonflyPullException;
 import ru.hse.dragonfly.puller.blobpuller.BlobPullGateway;
 import ru.hse.dragonfly.puller.blobpuller.PullRequest;
 import ru.hse.dragonfly.puller.blobpuller.PullResult;
-import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
@@ -122,7 +121,6 @@ public final class DfdaemonDownloadClient implements BlobPullGateway, Closeable 
         );
         AtomicBoolean finished = new AtomicBoolean(false);
         CompletableFuture<PullResult> result = new CompletableFuture<>();
-        Context.CancellableContext cancellableContext = Context.current().withCancellation();
         ScheduledFuture<?> timeoutFuture = null;
         if (requestOptions.isTimeoutEnabled()) {
             long requestTimeoutMillis = requestOptions.requestTimeoutMillis();
@@ -132,9 +130,7 @@ public final class DfdaemonDownloadClient implements BlobPullGateway, Closeable 
                         DragonflyPullErrorKind.TIMEOUT,
                         "download task exceeded timeout"
                 );
-                if (result.completeExceptionally(timeoutError)) {
-                    cancellableContext.cancel(timeoutError);
-                }
+                result.completeExceptionally(timeoutError);
             }, requestTimeoutMillis + 1000L, TimeUnit.MILLISECONDS);
         }
 
@@ -143,74 +139,70 @@ public final class DfdaemonDownloadClient implements BlobPullGateway, Closeable 
             if (finalTimeoutFuture != null) {
                 finalTimeoutFuture.cancel(false);
             }
-            cancellableContext.cancel(throwable);
-            cancellableContext.close();
         });
 
         try {
-            cancellableContext.run(() -> {
-                DfdaemonDownloadGrpc.DfdaemonDownloadStub requestStub = asyncStub;
-                if (requestOptions.isTimeoutEnabled()) {
-                    long requestTimeoutMillis = requestOptions.requestTimeoutMillis();
-                    requestStub = requestStub.withDeadlineAfter(requestTimeoutMillis, TimeUnit.MILLISECONDS);
-                }
-                requestStub.downloadTask(protoRequest, new StreamObserver<>() {
-                        @Override
-                        public void onNext(DownloadTaskResponse response) {
-                            if (DownloadTaskResponseMapper.isFinished(response)) {
-                                finished.set(true);
-                            }
+            DfdaemonDownloadGrpc.DfdaemonDownloadStub requestStub = asyncStub;
+            if (requestOptions.isTimeoutEnabled()) {
+                long requestTimeoutMillis = requestOptions.requestTimeoutMillis();
+                requestStub = requestStub.withDeadlineAfter(requestTimeoutMillis, TimeUnit.MILLISECONDS);
+            }
+            requestStub.downloadTask(protoRequest, new StreamObserver<>() {
+                    @Override
+                    public void onNext(DownloadTaskResponse response) {
+                        if (DownloadTaskResponseMapper.isFinished(response)) {
+                            finished.set(true);
                         }
+                    }
 
-                        @Override
-                        public void onError(Throwable throwable) {
-                            if (throwable instanceof StatusRuntimeException statusRuntimeException) {
-                                DragonflyPullErrorKind kind = mapError(statusRuntimeException.getStatus().getCode());
-                                LOG.error(
-                                        "download task failed: grpcStatus={} mappedErrorKind={}",
-                                        statusRuntimeException.getStatus(),
-                                        kind,
-                                        statusRuntimeException
-                                );
-                                result.completeExceptionally(
-                                        new DragonflyPullException(
-                                                kind,
-                                                "download task failed: " + statusRuntimeException.getStatus(),
-                                                statusRuntimeException
-                                        )
-                                );
-                                return;
-                            }
-                            LOG.error("download task failed with unexpected internal error", throwable);
+                    @Override
+                    public void onError(Throwable throwable) {
+                        if (throwable instanceof StatusRuntimeException statusRuntimeException) {
+                            DragonflyPullErrorKind kind = mapError(statusRuntimeException.getStatus().getCode());
+                            LOG.error(
+                                    "download task failed: grpcStatus={} mappedErrorKind={}",
+                                    statusRuntimeException.getStatus(),
+                                    kind,
+                                    statusRuntimeException
+                            );
                             result.completeExceptionally(
                                     new DragonflyPullException(
-                                            DragonflyPullErrorKind.INTERNAL,
-                                            "download task failed with internal error",
-                                            throwable
+                                            kind,
+                                            "download task failed: " + statusRuntimeException.getStatus(),
+                                            statusRuntimeException
                                     )
                             );
+                            return;
                         }
+                        LOG.error("download task failed with unexpected internal error", throwable);
+                        result.completeExceptionally(
+                                new DragonflyPullException(
+                                        DragonflyPullErrorKind.INTERNAL,
+                                        "download task failed with internal error",
+                                        throwable
+                                )
+                        );
+                    }
 
-                        @Override
-                        public void onCompleted() {
-                            if (!finished.get()) {
-                                LOG.warn("download task stream completed without finished marker");
-                            }
-                            if (!Files.exists(request.outputPath())) {
-                                LOG.error("download task finished but output file missing: outputPath={}", request.outputPath());
-                                result.completeExceptionally(
-                                        new DragonflyPullException(
-                                                DragonflyPullErrorKind.IO,
-                                                "dfdaemon completed without output file: " + request.outputPath()
-                                        )
-                                );
-                                return;
-                            }
-                            LOG.info("download task completed: outputPath={}", request.outputPath());
-                            result.complete(new PullResult(request.outputPath()));
+                    @Override
+                    public void onCompleted() {
+                        if (!finished.get()) {
+                            LOG.warn("download task stream completed without finished marker");
                         }
-                    });
-            });
+                        if (!Files.exists(request.outputPath())) {
+                            LOG.error("download task finished but output file missing: outputPath={}", request.outputPath());
+                            result.completeExceptionally(
+                                    new DragonflyPullException(
+                                            DragonflyPullErrorKind.IO,
+                                            "dfdaemon completed without output file: " + request.outputPath()
+                                    )
+                            );
+                            return;
+                        }
+                        LOG.info("download task completed: outputPath={}", request.outputPath());
+                        result.complete(new PullResult(request.outputPath()));
+                    }
+                });
         } catch (RuntimeException ex) {
             LOG.error("failed to start download task", ex);
             result.completeExceptionally(
