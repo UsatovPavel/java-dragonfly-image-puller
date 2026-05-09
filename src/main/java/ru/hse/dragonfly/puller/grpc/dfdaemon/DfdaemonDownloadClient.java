@@ -30,7 +30,6 @@ import org.dragonflyoss.api.dfdaemon.v2.DfdaemonDownloadGrpc;
 import org.dragonflyoss.api.dfdaemon.v2.DownloadTaskRequest;
 import org.dragonflyoss.api.dfdaemon.v2.DownloadTaskResponse;
 import ru.hse.dragonfly.puller.grpc.mapper.DownloadTaskRequestMapper;
-import ru.hse.dragonfly.puller.grpc.mapper.DownloadTaskResponseMapper;
 import ru.hse.dragonfly.puller.grpc.mapper.GrpcRetryServiceConfigMapper;
 
 public final class DfdaemonDownloadClient implements BlobPullGateway, Closeable {
@@ -150,7 +149,8 @@ public final class DfdaemonDownloadClient implements BlobPullGateway, Closeable 
             requestStub.downloadTask(protoRequest, new StreamObserver<>() {
                     @Override
                     public void onNext(DownloadTaskResponse response) {
-                        if (DownloadTaskResponseMapper.isFinished(response)) {
+                        if (response.hasDownloadTaskStartedResponse()
+                                && response.getDownloadTaskStartedResponse().getIsFinished()) {
                             finished.set(true);
                         }
                     }

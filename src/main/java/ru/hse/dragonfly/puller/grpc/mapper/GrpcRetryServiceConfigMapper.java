@@ -23,7 +23,7 @@ public final class GrpcRetryServiceConfigMapper {
                 "retryableStatusCodes", List.of("UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED")
         );
         Map<String, ?> methodConfig = Map.of(
-                "name", List.of(Map.of("service", "dfdaemon.v2.DfdaemonDownload", "method", "DownloadTask")),
+                "name", List.of(Map.of()),
                 "retryPolicy", retryPolicy
         );
         return Map.of("methodConfig", List.of(methodConfig));

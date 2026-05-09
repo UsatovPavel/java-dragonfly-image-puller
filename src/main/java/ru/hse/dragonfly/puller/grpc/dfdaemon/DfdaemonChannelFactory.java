@@ -17,6 +17,7 @@ public final class DfdaemonChannelFactory {
     }
 
     public static ManagedChannel create(String address) throws DragonflyPullException {
+        LOG.info("creating new dfdaemon channel: address={}", address);
         return createBuilder(address).build();
     }
 
