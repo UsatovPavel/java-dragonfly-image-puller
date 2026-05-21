@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  quality:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 23
+          cache: gradle
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Code quality
+        run: ./gradlew --no-daemon check -x test
+
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 23
+          cache: gradle
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Unit tests
+        run: ./gradlew --no-daemon test
+
+  dragonfly-integration:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 23
+          cache: gradle
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Setup minikube prerequisites
+        run: |
+          chmod +x scripts/ci-dragonfly-setup.sh
+          ./scripts/ci-dragonfly-setup.sh
+      - name: Start Dragonfly single-cluster
+        run: |
+          chmod +x scripts/minikube-dragonfly.sh
+          ./scripts/minikube-dragonfly.sh 1
+      - name: Dragonfly integration test
+        run: |
+          DFDAEMON_ADDR=unix:///var/run/dragonfly/dfdaemon.sock \
+            ./gradlew --no-daemon test --tests ru.hse.dragonfly.puller.BlobPullerLocalIntegrationTest
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: GITHUB_PACKAGES_TOKEN
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 23
+          cache: gradle
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ./gradlew --no-daemon publish -Pversion="$VERSION"
